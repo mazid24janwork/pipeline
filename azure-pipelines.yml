@@ -1,29 +1,27 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
 - main
 
+strategy:
+  matrix:
+    jdk10_linux:
+      imageName: "ubuntu-latest"
+      jdkVersion: "1.10"
+    jdk11_windows:
+      imageName: "windows-latest"
+      jdkVersion: "1.11"
+  maxParallel: 2
+
 pool:
-  vmImage: windows-latest
+  vmImage: $(imageName)
 
 steps:
-- task: NodeTool@0
+- task: Maven@4
   inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
-
-- script: |
-    npm install
-    npm run build
-  displayName: 'npm install and build'
-  
-
-- task: PublishCodeCoverageResults@1
-  inputs:
-    codeCoverageTool: "JaCoCo"
-    summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/site/jacoco/jacoco.xml"
-    reportDirectory: "$(System.DefaultWorkingDirectory)/**/site/jacoco"
-    failIfCoverageEmpty: true
+    mavenPomFile: "pom.xml"
+    mavenOptions: "-Xmx3072m"
+    javaHomeOption: "JDKVersion"
+    jdkVersionOption: $(jdkVersion)
+    jdkArchitectureOption: "x64"
+    publishJUnitResults: true
+    testResultsFiles: "**/TEST-*.xml"
+    goals: "package"
